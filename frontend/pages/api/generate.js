@@ -1,11 +1,7 @@
-const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
-const { Pinecone } = require('@pinecone-database/pinecone');
-const cors = require('cors');
-// Initialize Bedrock client
+import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
+import { Pinecone } from '@pinecone-database/pinecone';
 
-app.use(cors({
-  origin: 'https://smart-shopping-assistant-beta.vercel.app/', // your frontend domain here
-}));
+// Initialize Bedrock client
 const bedrockClient = new BedrockRuntimeClient({
   region: process.env.AWS_REGION,
   credentials: {
@@ -105,8 +101,21 @@ Give direct, helpful, confident answers. Do not reference the question or contex
   return answer;
 }
 
-// Main handler
-async function handler(req, res) {
+// Vercel API Route handler with CORS support
+export default async function handler(req, res) {
+  // Handle CORS preflight requests
+  if (req.method === 'OPTIONS') {
+    res.setHeader('Access-Control-Allow-Origin', 'https://smart-shopping-assistant-beta.vercel.app');
+    res.setHeader('Access-Control-Allow-Methods', 'POST, OPTIONS');
+    res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+    return res.status(200).end();
+  }
+
+  // Allow your frontend origin for actual requests
+  res.setHeader('Access-Control-Allow-Origin', 'https://smart-shopping-assistant-beta.vercel.app');
+  res.setHeader('Access-Control-Allow-Methods', 'POST');
+  res.setHeader('Access-Control-Allow-Headers', 'Content-Type');
+
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
@@ -147,5 +156,3 @@ async function handler(req, res) {
     res.status(500).json({ error: 'Failed to generate response' });
   }
 }
-
-module.exports = handler;
