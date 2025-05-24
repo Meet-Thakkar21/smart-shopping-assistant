@@ -1,7 +1,11 @@
 const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
 const { Pinecone } = require('@pinecone-database/pinecone');
-
+const cors = require('cors');
 // Initialize Bedrock client
+
+app.use(cors({
+  origin: 'https://smart-shopping-assistant-beta.vercel.app/', // your frontend domain here
+}));
 const bedrockClient = new BedrockRuntimeClient({
   region: process.env.AWS_REGION,
   credentials: {
