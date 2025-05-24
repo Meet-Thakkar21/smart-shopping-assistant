@@ -133,7 +133,7 @@ export default async function handler(req, res) {
 
     res.status(200).json({ answer });
   } catch (error) {
-    console.error('❌ Claude error:', error);
+    console.error('Claude error:', error);
     res.status(500).json({ error: 'Failed to generate response' });
   }
 }
