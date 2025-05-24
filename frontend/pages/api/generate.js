@@ -1,6 +1,7 @@
-import { BedrockRuntimeClient, InvokeModelCommand } from '@aws-sdk/client-bedrock-runtime';
-import { Pinecone } from '@pinecone-database/pinecone';
+const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
+const { Pinecone } = require('@pinecone-database/pinecone');
 
+// Initialize Bedrock client
 const bedrockClient = new BedrockRuntimeClient({
   region: process.env.AWS_REGION,
   credentials: {
@@ -9,9 +10,11 @@ const bedrockClient = new BedrockRuntimeClient({
   },
 });
 
+// Initialize Pinecone
 const pinecone = new Pinecone({ apiKey: process.env.PINECONE_API_KEY });
 const index = pinecone.Index(process.env.PINECONE_INDEX_NAME);
 
+// Get Titan embedding
 async function getTitanEmbedding(text) {
   const command = new InvokeModelCommand({
     modelId: 'amazon.titan-embed-text-v2:0',
@@ -25,6 +28,7 @@ async function getTitanEmbedding(text) {
   return result.embedding;
 }
 
+// Query Pinecone
 async function queryPinecone(embedding, topK = 3) {
   const response = await index.query({
     vector: embedding,
@@ -32,9 +36,10 @@ async function queryPinecone(embedding, topK = 3) {
     includeMetadata: true,
   });
 
-  return (response.matches || []).filter(m => m?.metadata?.content);
+  return (response.matches || []).filter((m) => m?.metadata?.content);
 }
 
+// Call Claude model
 async function callClaudeWithMessages(context, question) {
   const systemPrompt = `
 You are a smart shopping assistant. Answer questions clearly and confidently.
@@ -51,10 +56,10 @@ Give direct, helpful, confident answers. Do not reference the question or contex
 
   const messages = [
     {
-      role: "user",
+      role: 'user',
       content: [
         {
-          type: "text",
+          type: 'text',
           text: `${context}\n\nQ: ${question}\nA:`,
         },
       ],
@@ -62,12 +67,12 @@ Give direct, helpful, confident answers. Do not reference the question or contex
   ];
 
   const command = new InvokeModelCommand({
-    modelId: "anthropic.claude-3-haiku-20240307-v1:0",
-    contentType: "application/json",
-    accept: "application/json",
+    modelId: 'anthropic.claude-3-haiku-20240307-v1:0',
+    contentType: 'application/json',
+    accept: 'application/json',
     body: Buffer.from(
       JSON.stringify({
-        anthropic_version: "bedrock-2023-05-31",
+        anthropic_version: 'bedrock-2023-05-31',
         system: systemPrompt,
         messages,
         max_tokens: 1024,
@@ -78,8 +83,8 @@ Give direct, helpful, confident answers. Do not reference the question or contex
   });
 
   const response = await bedrockClient.send(command);
-  const result = JSON.parse(Buffer.from(response.body).toString("utf8"));
-  let answer = result.content?.[0]?.text?.trim() || "No response generated.";
+  const result = JSON.parse(Buffer.from(response.body).toString('utf8'));
+  let answer = result.content?.[0]?.text?.trim() || 'No response generated.';
 
   const vaguePatterns = [
     /not enough information/i,
@@ -89,14 +94,15 @@ Give direct, helpful, confident answers. Do not reference the question or contex
     /according to the/i,
   ];
 
-  if (vaguePatterns.some(p => p.test(answer))) {
+  if (vaguePatterns.some((p) => p.test(answer))) {
     answer = "I'm unable to answer that right now. Try asking something else.";
   }
 
   return answer;
 }
 
-export default async function handler(req, res) {
+// Main handler
+async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed. Use POST.' });
   }
@@ -117,7 +123,7 @@ export default async function handler(req, res) {
 
     const history = messages
       .slice(0, -1)
-      .map(m => `${m.sender === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
+      .map((m) => `${m.sender === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
       .join('\n');
 
     const fullContext = history ? `Conversation:\n${history}` : '';
@@ -125,7 +131,7 @@ export default async function handler(req, res) {
     const embedding = await getTitanEmbedding(question);
     const matches = await queryPinecone(embedding, 3);
     const contextText = matches.length > 0
-      ? matches.map(m => m.metadata.content).join('\n---\n')
+      ? matches.map((m) => m.metadata.content).join('\n---\n')
       : 'No relevant product information found.';
 
     const combinedContext = `${contextText}\n\n${fullContext}`;
@@ -137,3 +143,5 @@ export default async function handler(req, res) {
     res.status(500).json({ error: 'Failed to generate response' });
   }
 }
+
+module.exports = handler;
