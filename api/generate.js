@@ -8,7 +8,12 @@ const app = express();
 const port = 3001;
 
 app.use(express.json());
-app.use(cors());
+app.use(cors({
+  origin: 'https://smart-shopping-assistant-awff.vercel.app',
+  methods: ['GET', 'POST'],
+  credentials: true
+}))
+
 
 // AWS Bedrock Client
 const bedrockClient = new BedrockRuntimeClient({
