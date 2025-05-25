@@ -1,8 +1,14 @@
+require('dotenv').config();
 const express = require('express');
 const { BedrockRuntimeClient, InvokeModelCommand } = require('@aws-sdk/client-bedrock-runtime');
 const { Pinecone } = require('@pinecone-database/pinecone');
+const cors = require('cors');
 
-const router = express.Router();
+const app = express();
+const port = 3001;
+
+app.use(express.json());
+app.use(cors());
 
 // AWS Bedrock Client
 const bedrockClient = new BedrockRuntimeClient({
@@ -89,6 +95,7 @@ Give direct, helpful, confident answers. Do not reference the question or contex
   const result = JSON.parse(Buffer.from(response.body).toString("utf8"));
   let answer = result.content?.[0]?.text?.trim() || "No response generated.";
 
+  // Optional filter: override vague replies
   const vaguePatterns = [
     /not enough information/i,
     /please provide more context/i,
@@ -104,8 +111,8 @@ Give direct, helpful, confident answers. Do not reference the question or contex
   return answer;
 }
 
-// POST /generate
-router.post('/', async (req, res) => {
+// API route
+app.post('/generate', async (req, res) => {
   const { messages } = req.body;
 
   if (!messages || !Array.isArray(messages)) {
@@ -120,6 +127,7 @@ router.post('/', async (req, res) => {
 
     const question = lastMessage.content;
 
+    // Full conversation context (excluding last user message)
     const history = messages
       .slice(0, -1)
       .map(m => `${m.sender === 'user' ? 'User' : 'Assistant'}: ${m.content}`)
@@ -143,4 +151,6 @@ router.post('/', async (req, res) => {
   }
 });
 
-module.exports = router;
+app.listen(port, () => {
+  console.log(`🧠 Claude QA server running at http://localhost:${port}`);
+});
