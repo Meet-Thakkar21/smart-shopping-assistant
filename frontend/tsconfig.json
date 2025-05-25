@@ -1,27 +1,39 @@
 {
   "compilerOptions": {
+    /* ▶ General */
     "target": "es5",
     "lib": ["dom", "dom.iterable", "esnext"],
     "allowJs": true,
     "skipLibCheck": true,
     "strict": true,
+    "forceConsistentCasingInFileNames": true,
     "noEmit": true,
-    "esModuleInterop": true,
+
+    /* ▶ Module resolution */
     "module": "esnext",
     "moduleResolution": "bundler",
+    "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
+
+    /* ▶ JSX / React */
     "jsx": "preserve",
+
+    /* ▶ Build performance */
     "incremental": true,
-    "plugins": [
-      {
-        "name": "next"
-      }
-    ],
+
+    /* ▶ Next.js plugin */
+    "plugins": [{ "name": "next" }],
+
+    /* ▶ Path aliases (optional) */
     "paths": {
       "@/*": ["./*"]
     }
   },
-  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx", ".next/types/**/*.ts"],
+
+  /* ▶ Files to include in the TypeScript program */
+  "include": ["next-env.d.ts", "**/*.ts", "**/*.tsx"],
+
+  /* ▶ Always exclude dependencies */
   "exclude": ["node_modules"]
 }
