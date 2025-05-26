@@ -30,6 +30,17 @@ A smart AI-powered shopping assistant built with **Next.js (Frontend)**, **Expre
 
 ## 🧠 Architecture
 
+![System Architecture Diagram](./assets/architecture.png)
+
+1. **Frontend (Next.js)** sends user queries via `POST /generate`.
+2. **Backend (Express)**:
+   - Embeds the query using **Titan** from Bedrock.
+   - Queries **Pinecone** to fetch the most relevant product info.
+   - Sends the context + question to **Claude** via Bedrock.
+3. **Claude** generates a direct, helpful response (no vague answers).
+4. Response is returned and displayed in the chat UI.
+
+
 1. **Frontend (Next.js)** sends user queries via `POST /generate`.
 2. **Backend (Express)**:
    - Embeds the query using **Titan** from Bedrock.
