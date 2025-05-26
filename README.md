@@ -30,7 +30,7 @@ A smart AI-powered shopping assistant built with **Next.js (Frontend)**, **Expre
 
 ## 🧠 Architecture
 
-![System Architecture Diagram](./assets/architecture.png)
+![System Architecture Diagram](./assets/architeccture.png)
 
 1. **Frontend (Next.js)** sends user queries via `POST /generate`.
 2. **Backend (Express)**:
